@@ -31,8 +31,10 @@ function [qrs_pos,sign,en_thres] = jqrs_mod(ecg,varargin)
 % Released under the GNU General Public License
 %
 % Copyright (C) 2014  Joachim Behar
-% Oxford university, Intelligent Patient Monitoring Group
-% joachim.behar@eng.ox.ac.uk
+% Dr Joachim Behar
+% Bioenergetics and Bioelectric Systems Lab
+% Technion, Haifa, Israel
+% jbehar@tx.technion.ac.il
 %
 % Last updated : 13-09-2014
 % - bug on refrac period fixed
