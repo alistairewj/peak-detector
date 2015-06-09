@@ -1,9 +1,17 @@
 function [ sqi, tsqi ] = ecgsqi( ann1, ann2, opt )
 
+% *** IF OPTIONS IS NOT SET, WE GUESS THE LENGTH OF THE RECORD ***
+% If using this function on this own, please ensure you set LG_REC
+% It's better if the algorithm knows the length of the signal, less likely
+% to get an error!
+
 opt = setOptions(opt);
 if isnan(opt.LG_REC)  % length of the record in seconds
     % if it not provided, we replace it with our best guess using ann
     opt.LG_REC = ceil(max(max(ann1),max(ann2)));
+end
+
+if isnan(opt.N_WIN)
     opt.N_WIN = ceil(opt.LG_REC/opt.REG_WIN); % number of windows in the signal
 end
 
@@ -104,7 +112,6 @@ opt_default.THR = 0.15; % window for matching two peaks
 opt_default.LG_MED = 3; % take the median SQI across X seconds
 opt_default.SIZE_WIND = 10;
 opt_default.REG_WIN = 1; % one window per second
-opt_default.HALF_WIND = opt_default.SIZE_WIND/2;
 opt_default.LG_REC = NaN;  % length of the record in seconds
 opt_default.N_WIN = NaN; % number of windows in the signal
 
