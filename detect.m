@@ -177,7 +177,7 @@ if ~isempty(idxECG)
         if LINUX_FLAG
             system(['gqrs -r ' recordName ' -f 0 -o qrs -s ' num2str(m-1)]);
         else
-            gqrs(recordName,[],[],1,[],'qrs');
+            gqrs(recordName,[],[],m,[],'qrs');
         end
         
         % load in gqrs
