@@ -163,15 +163,13 @@ end
 %% ECG PEAK DETECT
 if ~isempty(idxECG)
     for m=idxECG
-        fprintf('Lead %d of %d. Signal %d (%s).\n',...
-            find(m==idxECG,1), numel(idxECG), m, header{m});
+	fprintf('Lead %d of %d. Signal %d (%s).\n',...
+	find(m==idxECG,1), numel(idxECG), m, header{m});
         
-%         %=== call jqrs
-%         fprintf('\tLoading epltd... ');
-%         try
-%         ann_jqrs{m} = rdann(recordName,['epltd' num2str(m-1)]);
-%         catch
-%         end
+	%=== call jqrs
+	fprintf('\tRunning jqrs... ');
+        ann_jqrs{m} = run_qrsdet_by_seg_ali(data(:,m),fs,opt);
+	fprintf('done.\n');
         
         %=== call gqrs
         % usage: gqrs -r recordName -s signalIndex
