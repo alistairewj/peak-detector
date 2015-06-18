@@ -112,11 +112,7 @@ if opt.SIMPLEMODE==1
     if numel(idxECG)>1
         idxECG = idxECG(1);
     end
-%     if strcmpi(header{1},'no signal')~=1
-%         if numel(idxECG)<1 || idxECG(1)~=1 % challenge organisers - sig1 is always ECG
-%             idxECG=[1,idxECG];
-%         end
-%     end
+    
     if numel(idxABP)>1
         idxABP = idxABP(1);
     end
