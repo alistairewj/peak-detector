@@ -6,10 +6,11 @@ Briefly, the technique aims to fuse the signals based off an estimate of signal 
 # Acknowledgement
 
 The code was developed for the PhysioNet/Computing in Cardiology 2014 challenge on multimodal peak detection. A conference publication [1] describing the principles of the technique is available here: http://cinc.org/archives/2014/pdf/0281.pdf
-The current implementation, as of June 1st, 2015 is described in the Physiological Measurement special issue article [2], which will soon be available (currently in press).
+The current implementation, as of June 1st, 2015 is described in a [Physiological Measurement special issue article](http://stacks.iop.org/0967-3334/36/1665) [2].
 
 
 [1] Johnson, A. E. W., Behar, J., Andreotti, F., Clifford, G. D. and Oster, J. (2014).  R-peak estimation using multimodal  lead switching, Computing in Cardiology Conference (CinC), 2014, Vol. 41, pp. 281-284.
 
-[2] Johnson,  A. E. W., Behar, J., Andreotti, F., Clifford, G. D. and Oster, J. (2015). Multimodal heart beat detection using signal quality indices, Physiological Measurementx(x): x.
+[2] Johnson,  A. E. W., Behar, J., Andreotti, F., Clifford, G. D. and Oster, J. (2015). Multimodal heart beat detection using signal quality indices, Physiological Measurement 36 (2015): 1665-1677.
+
 
