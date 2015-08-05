@@ -5,7 +5,7 @@ Briefly, the technique aims to fuse the signals based off an estimate of signal 
 
 # How to use this repository
 
-The main function for the peak detection algorithm is [detect.m](). The syntax is as follows:
+The main function for the peak detection algorithm is [detect.m](https://github.com/alistairewj/peak-detector/blob/master/detect.m). The syntax is as follows:
 
 ```matlab
 [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect(recordName, FUSEALG, DELAYALG, opt_input)
@@ -13,7 +13,7 @@ The main function for the peak detection algorithm is [detect.m](). The syntax i
 
 The four inputs are:
 
-* `recordName` - this is the name of the file to be loaded in with the WFDB toolbox. If you are unsure what the WFDB toolbox is, please see [here](). There should be two files: one `.dat` and one `.hea`.
+* `recordName` - this is the name of the file to be loaded in with the WFDB toolbox. If you are unsure what the WFDB toolbox is, please see [here](http://physionet.org/physiotools/matlab/wfdb-app-matlab/). There should be two files: one `.dat` and one `.hea`.
 * FUSEALG - This string defines the type of fusion to do across leads. `'sqi'` specifies that signal quality should be used to fuse the leads. `'regularity'` specifies that regularity should be used. The default (for any text, including `'sqi'`) is to use `'sqi'`.
 * DELAY - This is the method to determine the delay between the ECG R-peak and any associated pulse in another waveform. The default, `'map'`, finds a 1 minute segment with alternating ECG R-peaks and pulses, and calculates the average delay for this segment. This delay is used across the *entire* signal. This was valid for the 10 minute signals that the code was developed on: it may not be valid on longer records. The alternative method, `'crosscorr'`, uses cross correlation to determine the delay.
 * opt_input - This is a structure used to define a variety of parameters for each peak detector (e.g. the ECG peak detector, the ABP peak detector, etc).
