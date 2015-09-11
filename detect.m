@@ -1,10 +1,16 @@
-function [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect(recordName, FUSEALG, DELAYALG, opt_input)
-%[ beat, sqi ] = detect(RECORDNAME) detects QRS complexes in the given
-%record. RECORDNAME must be in a WFDB compatible file format.
+function [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect2(data, header, fs, FUSEALG, DELAYALG, opt_input)
+%[ beat, sqi ] = detect2(DATA, HEADER, FS) detects QRS complexes in the given
+% matrix of data. HEADER must contain signal names which map to the list below.
+% FS must contain a numeric sampling frequency.
+
+%   DATA - NxD matrix of N samples with D signals. Each signal should correspond
+%       to a signal name in HEADER
+%   HEADER - 1xD cell array of strings, containing the signal name (e.g. 'ECG', see below)
+%   FS  - scalar double, containing the sampling frequency
 
 %	This QRS detector fuses beats detected on the ECG and the ABP waveforms
 %
-%	signals	- the following are acceptable signal names
+%	HEADER	- the following are acceptable signal names
 %			ECG	- electrocardiogram
 %			ABP	- arterial blood pressure
 %			ART	- arterial blood pressure
@@ -21,16 +27,27 @@ function [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect(recordName, FUSEALG
 %          and on GNU Octave 3.6.4 and later, on Linux, Mac OS X, and
 %          Windows.
 
-%% PRE-GAME
-% if true, saves detections to annotation files and re-saves the data to a mat file
-SAVE_STUFF = 0;
-if nargin<2
-FUSEALG = 'sqi';
-end
+%% CHECK INPUTS ARE VALID
 if nargin<3
-DELAYALG = 'map';
+    error('Function requires at least 3 inputs.');
+end
+if nargin<4
+    FUSEALG = 'sqi';
+end
+if nargin<5
+    DELAYALG = 'map';
 end
 
+% check data types
+if isdouble(data)==0
+    error('Data must be an NxD matrix of N samples and D signals');
+end
+if isdouble(fs)==0
+    error('Third input must be a 1x1 integer representing the sampling frequency.');
+end
+if ischar(header) && size(data,2)==1
+    header = {header}; % convert to 1x1 cell array of strings
+end
 if ischar(FUSEALG)~=1 || any(ismember(FUSEALG,{'sqi','regularity'}))==0
     fprintf('Fusion algorithm name unrecognised - using default SQI switching.\n');
     FUSEALG = 'sqi';
@@ -41,6 +58,15 @@ if ischar(DELAYALG)~=1 || any(ismember(DELAYALG,{'map','crosscorr','cc'}))==0
     DELAYALG = 'map';
 end
 
+% check that data/header are consistent in size
+if size(data,2) ~= size(header,2)
+    error('Each signal in DATA must have a corresponding element in HEADER, and vice versa.');
+end
+
+%% PRE-GAME
+% if true, saves detections to WFDB format annotation files
+SAVE_STUFF = 0;
+recordName = ['TMP_' datestr(now,'dd-mm-yyyy-HHMMSS')];
 
 % Flag which marks suspected pacing, as indicated by large ABP delays
 SUSPECTED_PACING = 0;
@@ -54,8 +80,6 @@ switch FUSEALG
         ENABLE_OTHER_DETECTORS = 0;
 end
 
-%% LOAD DATA
-[ data, header, fs ] = loadData(recordName);
 [ idxECG, idxABP, idxPPG, idxSV ] = getSignalIndices(header);
 
 %% ECG sqi parameters
@@ -141,25 +165,8 @@ abp_delay   = nan(1,M);
 ppg_delay   = nan(1,M);
 sv_delay    = nan(1,M);
 
-if ~isempty(idxECG)
-    for m=idxECG
-        if LINUX_FLAG == 1
-        system(['rdann -r ' recordName ' -a epltd' num2str(m-1) ' -x | awk ''{print $1}'' > tmpout']);
-        fp = fopen('tmpout','r');
-        tmp = textscan(fp,'%s','delimiter','\n');
-        tmp = tmp{1};
-        tmp = str2double(tmp);
-        tmp = round(tmp * fs)+1; % convert 0-1 indexing
-        ann_jqrs{m} = tmp;
-        else
-        try
-            ann_jqrs{m} = rdann(recordName,['epltd' num2str(m-1)]);
-        catch
-            ann_jqrs{m} = [];
-        end
-        end
-    end
-end
+
+
 %% ECG PEAK DETECT
 if ~isempty(idxECG)
     for m=idxECG
@@ -174,36 +181,20 @@ if ~isempty(idxECG)
         %=== call gqrs
         % usage: gqrs -r recordName -s signalIndex
         fprintf('\tRunning gqrs... ');
-        if LINUX_FLAG
-            system(['gqrs -r ' recordName ' -f 0 -o qrs -s ' num2str(m-1)]);
-        else
-            gqrs(recordName,[],[],m,[],'qrs');
-        end
+        gqrs(recordName,[],[],m,[],['gqrs' num2str(m)]);
         
         % load in gqrs
-        if LINUX_FLAG == 1
-        system(['rdann -r ' recordName ' -a qrs -x | awk ''{print $1}'' > tmpout']);
-        fp = fopen('tmpout','r');
-        tmp = textscan(fp,'%s','delimiter','\n');
-        tmp = tmp{1};
-        tmp = str2double(tmp);
-        ann_gqrs{m} = round(tmp * fs)+1; % convert 0-1 indexing
-        else
-            
         try
-            ann_gqrs{m} = rdann(recordName,'qrs');
+            ann_gqrs{m} = rdann(recordName,['gqrs' num2str(m)]);
         catch
             % rdann sometimes crashes when loading empty qrs annotations
             ann_gqrs{m} = [];
         end
-        end
         fprintf('done.\n');
         
-        %=== output to file
-        if SAVE_STUFF == 1
-            movefile([recordName '.qrs'],[recordName '.gqrs' num2str(m)]);
-        else
-            delete([recordName '.qrs']);
+        %=== delete gqrs' output
+        if SAVE_STUFF==0
+            delete([recordName 'gqrs' num2str(m)]);
         end
         
         %=== convert to time
@@ -212,10 +203,6 @@ if ~isempty(idxECG)
         
     end
 end % end 'if ECG exists' segment
-% ann_gqrs    = ann_gqrs(idxECG);
-% ann_jqrs    = ann_jqrs(idxECG);
-% sqi_ecg     = sqi_ecg(idxECG);
-
 
 %% ABP (if present)
 if ~isempty(idxABP)
@@ -226,32 +213,13 @@ if ~isempty(idxABP)
                 abp{m} = corrDelineator(data(:,m),peakp,onsetp,fs,1);
                 abp{m} = abp{m}(:); % enforce column vector
             otherwise % default is wabp for unrecognised strings
-                if LINUX_FLAG
-                    system(['wabp -r ' recordName ' -s ' num2str(m-1)]);
-                else
-                    wabp(recordName,[],[],[],m);
-                end
+                wabp(recordName,[],[],[],m);
                 
-                if LINUX_FLAG == 1
-                system(['rdann -r ' recordName ' -a wabp -x | awk ''{print $1}'' > tmpout']);
-                fp = fopen('tmpout','r');
-                tmp = textscan(fp,'%s','delimiter','\n');
-                tmp = tmp{1};
-                tmp = str2double(tmp);
-                abp{m} = round(tmp * fs)+1; % convert 0-1 indexing
-                else
-                    try
+                try
                     abp{m} = rdann(recordName,'wabp');
-                    catch
-                        abp{m} = [];
-                    end
+                catch
+                    abp{m} = [];
                 end
-%                 try
-%                     abp{m} = rdann(recordName,'wabp');
-%                 catch
-%                     % rdann sometimes crashes with empty annotations
-%                     abp{m} = [];
-%                 end
         end
         
         
@@ -312,6 +280,7 @@ if ~isempty(idxABP)
     end
     end
 end
+
 %% SV (if present)
 if ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxSV)
     for m=idxSV
@@ -332,6 +301,7 @@ if ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxSV)
         
     end
 end
+
 %% PPG (if present)
 if ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxPPG)
     for m=idxPPG
@@ -515,8 +485,6 @@ end
 if ~isempty(qrs_final)
     %=== write out to file
     wrann(recordName,'qrs',qrs_final,[],[],[],[]);
-else
-    system(['mv ' recordName '.epltd0 ' recordName '.qrs']);
 end
 
 end
