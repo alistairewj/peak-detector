@@ -141,25 +141,6 @@ abp_delay   = nan(1,M);
 ppg_delay   = nan(1,M);
 sv_delay    = nan(1,M);
 
-if ~isempty(idxECG)
-    for m=idxECG
-        if LINUX_FLAG == 1
-        system(['rdann -r ' recordName ' -a epltd' num2str(m-1) ' -x | awk ''{print $1}'' > tmpout']);
-        fp = fopen('tmpout','r');
-        tmp = textscan(fp,'%s','delimiter','\n');
-        tmp = tmp{1};
-        tmp = str2double(tmp);
-        tmp = round(tmp * fs)+1; % convert 0-1 indexing
-        ann_jqrs{m} = tmp;
-        else
-        try
-            ann_jqrs{m} = rdann(recordName,['epltd' num2str(m-1)]);
-        catch
-            ann_jqrs{m} = [];
-        end
-        end
-    end
-end
 %% ECG PEAK DETECT
 if ~isempty(idxECG)
     for m=idxECG
@@ -515,8 +496,6 @@ end
 if ~isempty(qrs_final)
     %=== write out to file
     wrann(recordName,'qrs',qrs_final,[],[],[],[]);
-else
-    system(['mv ' recordName '.epltd0 ' recordName '.qrs']);
 end
 
 end
