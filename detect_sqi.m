@@ -1,5 +1,5 @@
 function [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
-%[ beat, sqi ] = detect2(DATA, HEADER, FS) detects QRS complexes in the given
+%[ beat, sqi ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
 % matrix of data. HEADER must contain signal names which map to the list below.
 % FS must contain a numeric sampling frequency.
 
@@ -115,8 +115,7 @@ sv_delay    = nan(1,M);
 recordName = ['tmp' datestr(now,'ddmmyyyy_HHMMSS')];
 %TODO: this is required because gqrs/wabp run on .dat/.hea files
 % ideally, we would have these functions run on matlab data directly
-tm = (transpose(1:N)-1) ./ fs;
-wrsamp(tm,data,recordName,fs);
+wrsamp((transpose(1:N)-1),data*10000,recordName,fs,10000,'16+24');
 
 %% ECG PEAK DETECT
 if ~isempty(idxECG)
@@ -270,7 +269,7 @@ if ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxPPG)
 end
 
 %% switching
-qrs_final = cell(opt.N_WIN,1);
+% qrs_final = cell(opt.N_WIN,1);
 % switch FUSEALG
 %     case 'regularity'
 %         %% combine all the annotations
@@ -311,7 +310,7 @@ qrs_final = cell(opt.N_WIN,1);
 %     otherwise % SQI switching
 %% ECG LEAD WISE SQI
 for m=idxECG
-    fprintf('\tCalculating windowed sqi... ');
+    fprintf('\tCalculating windowed sqi on signal %d... ', m);
     if ~isempty(ann_gqrs{m}) && ~isempty(ann_jqrs{m})
         %=== calculate the SQI for each ECG lead
         % all tsqi (start time of SQI window) will be identical, so
