@@ -1,4 +1,4 @@
-function [ qrs_final, sqi_ecg, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
+function [ qrs_final, sqi_ecg, abpsqi, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
 %[ beat, sqi ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
 % matrix of data. HEADER must contain signal names which map to the list below.
 % FS must contain a numeric sampling frequency.
@@ -174,7 +174,7 @@ if ~isempty(idxABP)
         [ sqi_bp{m}, header_sq, sqi_bp_values, header_sqi ] = calcABPSQI(data(:,m), abp{m}, fs);
         abp{m} = abp{m} / fs;
         
-        switch DELAYALG
+        switch opt.DELAYALG
             case {'crosscorr','cc'}
                 %=== use cross correlation to map ABP back to ECG
                 if isempty(idxECG)
@@ -215,7 +215,7 @@ if ~isempty(idxABP)
         end
     end
     if opt.USE_PACING==1
-    if strcmp(DELAYALG,'map') && min(abp_delay) > 0.4 
+    if strcmp(opt.DELAYALG,'map') && min(abp_delay) > 0.4 
         SUSPECTED_PACING = 1;
         % undo the delay on ABP peaks, and replace it with default 0.2
         for m=idxABP
