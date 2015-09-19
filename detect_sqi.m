@@ -1,4 +1,4 @@
-function [ qrs_final, sqi_ecg, abpsqi, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
+function [ qrs_final, sqi_ecg, sqi_abp, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
 %[ beat, sqi ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
 % matrix of data. HEADER must contain signal names which map to the list below.
 % FS must contain a numeric sampling frequency.
@@ -105,7 +105,7 @@ ppg         = cell(1,M);
 sv          = cell(1,M);
 sqi_bp      = cell(1,M);
 abp         = cell(1,M);
-abpsqi      = cell(1,M);
+sqi_abp      = cell(1,M);
 abp_delay   = nan(1,M);
 ppg_delay   = nan(1,M);
 sv_delay    = nan(1,M);
@@ -331,7 +331,7 @@ for m=idxABP
         (0:opt.REG_WIN:opt.LG_REC+(opt.REG_WIN/2)) + opt.SIZE_WIND];
     if numel(xi)<=2
         %=== we never switch because the record is too short
-        abpsqi{m} = mean(sqi_bp{m}(:,1));
+        sqi_abp{m} = mean(sqi_bp{m}(:,1));
         %=== we are switching less frequently than our SQI win size
         % so we can calculate window by window SQIs for ABP easily
     elseif xi(3) >= xi(2)
@@ -346,9 +346,9 @@ for m=idxABP
         tmp2 = accumarray(idxMap(idxMap~=0),sqi_bp{m}(idxMap~=0,1)) ./ tmp;
         idxKeep = unique(idxMap);
         idxKeep(idxKeep==0) = [];
-        abpsqi{m} = zeros(size(xi));
-        abpsqi{m}(idxKeep) = tmp2(idxKeep);
-        abpsqi{m} = abpsqi{m}(1:2:end);
+        sqi_abp{m} = zeros(size(xi));
+        sqi_abp{m}(idxKeep) = tmp2(idxKeep);
+        sqi_abp{m} = sqi_abp{m}(1:2:end);
     else
         %=== we have more than 1 switch event per SQI window
         % this prevents directy application of histc, have to be a
@@ -366,28 +366,28 @@ for m=idxABP
         % then we move to the next row to do the same
         % then we vertically concatenate it all together
         
-        abpsqi{m} = zeros(opt.SIZE_WIND/opt.REG_WIN,size(tabpsqi,2)-1);
+        sqi_abp{m} = zeros(opt.SIZE_WIND/opt.REG_WIN,size(tabpsqi,2)-1);
         for d=1:size(tabpsqi,1)
             xi = tabpsqi(d,:);
             % idxMap finds which window each abp beat corresponds
             [tmp,idxMap] = histc(abp{m},xi);
             % accumarray sums the ABP SQIs with the same idxMap
             % dividing by tmp makes abpsqi{m} the mean SQI
-            abpsqi{m}(d,1:max(idxMap)) = accumarray(idxMap(idxMap~=0),sqi_bp{m}(idxMap~=0,1)) ./ tmp(1:max(idxMap));
+            sqi_abp{m}(d,1:max(idxMap)) = accumarray(idxMap(idxMap~=0),sqi_bp{m}(idxMap~=0,1)) ./ tmp(1:max(idxMap));
         end
-        abpsqi{m} = abpsqi{m}(:);
+        sqi_abp{m} = sqi_abp{m}(:);
         
         %=== values of 'NaN' are due to a division by 0
         % these occur if there are no beats in the given window
         % we should probably call these segments bad quality!
-        abpsqi{m}(isnan(abpsqi{m})) = 0;
+        sqi_abp{m}(isnan(sqi_abp{m})) = 0;
         
         %=== now we create the final abp times
         tabpsqi = tabpsqi(:,1:end-1); % histc always excludes last col
         tabpsqi = tabpsqi(:);
         
         %=== now we delete the indices after the end of the rec
-        abpsqi{m}(tabpsqi>=opt.LG_REC) = [];
+        sqi_abp{m}(tabpsqi>=opt.LG_REC) = [];
     end
 end
 
@@ -401,7 +401,7 @@ end
 
 %=== set up for switching
 qrs_in = [ann_gqrs(idxECG), abp(idxABP)];
-sqi_in = [sqi_ecg(idxECG), abpsqi(idxABP)];
+sqi_in = [sqi_ecg(idxECG), sqi_abp(idxABP)];
 
 % use a delay of 100ms for the ECG, as it is used in the switching
 % function to check for missed beats on SQI switching transitions
