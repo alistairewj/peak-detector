@@ -49,7 +49,7 @@ stop  = segsizeSamp;
 signForce = 0; % if we want to force the sign of the peak we are looking for
 
 % == core function
-try
+% try
     for ch=1:NbSeg
         % for each segment perform QRS detection
         QRStemp = 0;
@@ -100,10 +100,10 @@ try
         stop = stop+segsizeSamp;
     end
 
-catch ME
-    for enb=1:length(ME.stack); disp(ME.stack(enb)); end;
-    QRS = [];
-    rethrow(ME);
-end
+% catch ME
+%     for enb=1:length(ME.stack); disp(ME.stack(enb)); end;
+%     QRS = [];
+%     rethrow(ME);
+% end
 
 end

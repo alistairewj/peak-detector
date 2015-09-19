@@ -94,7 +94,7 @@ HIGH_CUT_FREQ = 45;
 SEARCH_BACK = 0; % perform search back (FIXME: should be in function param)
 MAX_FORCE = []; % if you want to force the energy threshold value (FIXME: should be in function param)
 
-try
+% try
     % == prefiltering
     [b_lp,a_lp] = butter(5,HIGH_CUT_FREQ/(fs/2),'high');
     [b_bas,a_bas] = butter(2,LOW_CUT_FREQ/(fs/2),'high'); % FIXME: use more coefficients?
@@ -201,7 +201,8 @@ try
     win = round(0.1*fs);
     % extremities with care
     extradet = [];
-    if maxloc(1)-win <= 0
+    
+    if ~isempty(maxloc) && maxloc(1)-win <= 0
         extradet = maxloc(1);
         maxloc(1) = [];
     end
@@ -214,11 +215,11 @@ try
     R_amp = maxval; % amplitude at QRS positions
     hrv = 60./diff(R_t); % heart rate
 
-catch ME
-    rethrow(ME);
-    for enb=1:length(ME.stack); disp(ME.stack(enb)); end;
-    qrs_pos = [1 10 20]; sign = 1; en_thres = 0.5; 
-end
+% catch ME
+%     rethrow(ME);
+%     for enb=1:length(ME.stack); disp(ME.stack(enb)); end;
+%     qrs_pos = [1 10 20]; sign = 1; en_thres = 0.5; 
+% end
 
 % == plots
 if debug
