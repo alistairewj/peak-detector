@@ -54,7 +54,7 @@ end
 %% PRE-GAME
 % if true, saves detections to WFDB format annotation files
 SAVE_STUFF = 0;
-recordName = ['TMP_' datestr(now,'dd-mm-yyyy-HHMMSS')];
+recordName = ['TMP_' datestr(now,'dd-mm-yyyy-HHMMSSFFF')];
 
 % Flag which marks suspected pacing, as indicated by large ABP delays
 SUSPECTED_PACING = 0;
@@ -112,7 +112,6 @@ sv_delay    = nan(1,M);
 
 
 %% Write the data out to wfdb
-recordName = ['tmp' datestr(now,'ddmmyyyy_HHMMSS')];
 %TODO: this is required because gqrs/wabp run on .dat/.hea files
 % ideally, we would have these functions run on matlab data directly
 wrsamp((transpose(1:N)-1),data*10000,recordName,fs,10000,'16+24');
@@ -587,7 +586,7 @@ opt_default.JQRS_REFRAC = 0.25;
 opt_default.JQRS_INTWIN_SZ = 7;
 opt_default.JQRS_WINDOW = 15;
 
-opt_default.DELAY_ALG = 'map';
+opt_default.DELAYALG = 'map';
 
 if nargin==0
     opt = opt_default;
