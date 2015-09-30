@@ -5,6 +5,28 @@ Briefly, the technique aims to fuse the signals based off an estimate of signal 
 
 # How to use this repository
 
+All code within this repository requires the WFDB toolbox:
+https://github.com/ikarosilva/wfdb-app-toolbox
+
+## If using data stored in MATLAB
+
+The function `detect_sqi` has been provided to perform peak detection directly on data stored in MATLAB. The function can be called as follows:
+
+```matlab
+[ QRS_FINAL, SQI_ECG, SQI_ABP, ANN_JQRS, ANN_GQRS ] = detect_sqi(DATA, HEADER, FS, OPT_INPUT)
+```
+
+This function implements the SQI switching method which had the highest performance in Phase 3 of the Physionet/Computing in Cardiology 2014 challenge on multimodal peak detection.
+
+* DATA - An NxM matrix of N samples with M signals. Data should be input in physical units, otherwise the estimates of signal quality will fail.
+* HEADER - A 1xM cell array of strings which provides signal information for each signal in DATA. Please use recognizable signal names: 'ecg' will be recognized as an electrocardiogram, but 'signal 1' will not.
+* FS - A 1x1 scalar which represents the sampling frequency at which the data is stored.
+* OPT_INPUT - This is a structure used to define a variety of parameters for each peak detector (e.g. the ECG peak detector, the ABP peak detector, etc).
+
+More information on the options structure is provided below.
+
+## If using data stored as WFDB compatible files
+
 The main function for the peak detection algorithm is [detect.m](https://github.com/alistairewj/peak-detector/blob/master/detect.m). The syntax is as follows:
 
 ```matlab
@@ -17,6 +39,10 @@ The four inputs are:
 * FUSEALG - This string defines the type of fusion to do across leads. `'sqi'` specifies that signal quality should be used to fuse the leads. `'regularity'` specifies that regularity should be used. The default (for any text, including `'sqi'`) is to use `'sqi'`.
 * DELAY - This is the method to determine the delay between the ECG R-peak and any associated pulse in another waveform. The default, `'map'`, finds a 1 minute segment with alternating ECG R-peaks and pulses, and calculates the average delay for this segment. The alternative method, `'crosscorr'`, uses cross correlation to determine the delay. The single delay value for both methods is used across the *entire* signal. This was valid for the 10 minute signals that the code was developed on: it may not be valid on longer records.
 * opt_input - This is a structure used to define a variety of parameters for each peak detector (e.g. the ECG peak detector, the ABP peak detector, etc).
+
+More information on the options structure is provided below.
+
+## Options structure
 
 opt_input has the following fields (all set to sensible defaults if not otherwise specified):
 
