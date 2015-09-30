@@ -1,16 +1,20 @@
-function [ qrs_final, sqi_ecg, sqi_abp, ann_jqrs, ann_gqrs ] = detect_regularity(data, header, fs, opt_input)
-%[ beat, sqi ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
+function [ qrs, qrs_comp, qrs_header ] = detect_regularity(data, header, fs, opt_input)
+%[ QRS ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
 % matrix of data. HEADER must contain signal names which map to the list below.
 % FS must contain a numeric sampling frequency.
-
+%
+%[ QRS, QRS_COMP, QRS_HEADER ] = detect_sqi(DATA, HEADER, FS) also returns
+%the constitutent QRS detectors (QRS_COMP) and a header describing each
+%detector (QRS_HEADER).
+%
 % This function uses an estimate of signal quality to switch between
 % signals.
-
+%
 %   DATA - NxD matrix of N samples with D signals. Each signal should correspond
 %       to a signal name in HEADER. Do not include time as a singal.
 %   HEADER - 1xD cell array of strings, containing the signal name (e.g. 'ECG', see below)
 %   FS  - scalar double, containing the sampling frequency
-
+%
 %	This QRS detector fuses beats detected on the ECG and the ABP waveforms
 %
 %	HEADER	- the following are acceptable signal names
@@ -100,10 +104,8 @@ end
 [N,M] = size(data);
 ann_jqrs    = cell(1,M);
 ann_gqrs    = cell(1,M);
-sqi_ecg     = cell(1,M);
 ppg         = cell(1,M);
 sv          = cell(1,M);
-sqi_bp      = cell(1,M);
 abp         = cell(1,M);
 sqi_abp      = cell(1,M);
 abp_delay   = nan(1,M);
@@ -276,11 +278,19 @@ if ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxPPG)
 end
 
 %% lead switching using regularity of the RR interval
-qrs_final = cell(opt.N_WIN,1);
+qrs = cell(opt.N_WIN,1);
 % put all the annotations into a single cell array
-qrs_out = [ann_jqrs(idxECG),ann_gqrs(idxECG),...
+qrs_comp = [ann_jqrs(idxECG),ann_gqrs(idxECG),...
     ppg(idxPPG), abp(idxABP), sv(idxSV)];
-M = numel(qrs_out);
+
+%=== create the header
+qrs_header = [strcat(repmat({'jqrs'}, 1, sum(~isempty(ann_jqrs(idxECG)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxECG))), 'UniformOutput', false)),...
+    strcat(repmat({'gqrs'}, 1, sum(~isempty(ann_jqrs(idxABP)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxABP))), 'UniformOutput', false)),...
+    strcat(repmat({'ppg'}, 1, sum(~isempty(ann_jqrs(idxPPG)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxPPG))), 'UniformOutput', false)),...
+    strcat(repmat({'abp'}, 1, sum(~isempty(ann_jqrs(idxABP)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxABP))), 'UniformOutput', false)),...
+    strcat(repmat({'sv'}, 1, sum(~isempty(ann_jqrs(idxSV)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxSV))), 'UniformOutput', false))];
+
+M = numel(qrs_comp);
 
 for w=1:opt.N_WIN
     curr_qrs = cell(1,M);
@@ -292,7 +302,7 @@ for w=1:opt.N_WIN
     SMI = 100*ones(1,numel(curr_qrs)+1);
     for m=1:M
         % first, subselect a window of data
-        curr_qrs{m} = qrs_out{m}(qrs_out{m}>ww-opt.REG_WIN & qrs_out{m}<=ww);
+        curr_qrs{m} = qrs_comp{m}(qrs_comp{m}>ww-opt.REG_WIN & qrs_comp{m}<=ww);
         
         % if we have more than 2 peaks, calculate std(std(RR intervals))
         if numel(curr_qrs{m})>2
@@ -303,7 +313,7 @@ for w=1:opt.N_WIN
     %FIXME: if all regularities are poor, we should probably output no
     %annotations rather than garbage
     [minSMI,idxMin] = min(SMI);
-    qrs_final{w} = curr_qrs{idxMin};
+    qrs{w} = curr_qrs{idxMin};
     
     %=== we must remove double detections at the boundaries
     % this can occur if we switch from one lead to another, and when we
@@ -318,23 +328,23 @@ for w=1:opt.N_WIN
     % x  x  x|   o
     
     % takes advantage of the heart's refractory period being 250ms
-    if w>1 && ~isempty(qrs_final{w-1}) && ~isempty(qrs_final{w})
-        lastQRS = qrs_final{w-1}(end);
-        if abs(lastQRS - qrs_final{w}(1)) < 0.25 % within refractory
+    if w>1 && ~isempty(qrs{w-1}) && ~isempty(qrs{w})
+        lastQRS = qrs{w-1}(end);
+        if abs(lastQRS - qrs{w}(1)) < 0.25 % within refractory
             % -> assume it is a double detection and remove
-            qrs_final{w}(1) = [];
+            qrs{w}(1) = [];
         end
     end
 end
 
-qrs_final = vertcat(qrs_final{:});
-if ~isempty(qrs_final)
-    qrs_final = round(qrs_final(:)*fs);
+qrs = vertcat(qrs{:});
+if ~isempty(qrs)
+    qrs = round(qrs(:)*fs);
 end
 
-if ~isempty(qrs_final) && SAVE_STUFF==1
+if ~isempty(qrs) && SAVE_STUFF==1
     %=== write out to file
-    wrann(recordName,'qrs',qrs_final,[],[],[],[]);
+    wrann(recordName,'qrs',qrs,[],[],[],[]);
 end
 
 if SAVE_STUFF==0

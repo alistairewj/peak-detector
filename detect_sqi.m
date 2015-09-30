@@ -1,7 +1,11 @@
-function [ qrs_final, sqi_ecg, sqi_abp, ann_jqrs, ann_gqrs ] = detect_sqi(data, header, fs, opt_input)
+function [ qrs, qrs_comp, qrs_header, sqi ] = detect_sqi(data, header, fs, opt_input)
 %[ beat, sqi ] = detect_sqi(DATA, HEADER, FS) detects QRS complexes in the given
 % matrix of data. HEADER must contain signal names which map to the list below.
 % FS must contain a numeric sampling frequency.
+%
+%[ QRS, QRS_COMP, QRS_HEADER ] = detect_sqi(DATA, HEADER, FS) also returns
+%the constitutent QRS detectors (QRS_COMP) and a header describing each
+%detector (QRS_HEADER).
 
 % This function uses an estimate of signal quality to switch between
 % signals.
@@ -400,34 +404,42 @@ if opt.USE_PACING == 1 && SUSPECTED_PACING==1
 end
 
 %=== set up for switching
-qrs_in = [ann_gqrs(idxECG), abp(idxABP)];
-sqi_in = [sqi_ecg(idxECG), sqi_abp(idxABP)];
+qrs_comp = [ann_gqrs(idxECG), abp(idxABP)];
+sqi = [sqi_ecg(idxECG), sqi_abp(idxABP)];
+
+
+%=== create the header
+qrs_header = [strcat(repmat({'gqrs'}, 1, sum(~isempty(ann_jqrs(idxECG)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxECG))), 'UniformOutput', false)),...
+    %strcat(repmat({'gqrs'}, 1, sum(~isempty(ann_jqrs(idxABP)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxABP))), 'UniformOutput', false)),...
+    strcat(repmat({'abp'}, 1, sum(~isempty(ann_jqrs(idxABP)))), arrayfun(@num2str, 1:sum(~isempty(ann_jqrs(idxABP))), 'UniformOutput', false))];
+
 
 % use a delay of 100ms for the ECG, as it is used in the switching
 % function to check for missed beats on SQI switching transitions
 abp_delay = [0.1*ones(1,numel(idxECG)),abp_delay(idxABP)];
 %=== perform switching
-if numel(qrs_in)==1
-    qrs_final = round(qrs_in{:});
+if numel(qrs_comp)==1
+    qrs = round(qrs_comp{:});
 else
-    for m=1:numel(sqi_in)
-        if numel(sqi_in{m})<opt.N_WIN
-            sqi_in{m} = [sqi_in{m};zeros(opt.N_WIN - numel(sqi_in{m}),1)];
-        elseif numel(sqi_in{m})>opt.N_WIN
-            sqi_in{m} = sqi_in{m}(1:opt.N_WIN);
+    for m=1:numel(sqi)
+        if numel(sqi{m})<opt.N_WIN
+            sqi{m} = [sqi{m};zeros(opt.N_WIN - numel(sqi{m}),1)];
+        elseif numel(sqi{m})>opt.N_WIN
+            sqi{m} = sqi{m}(1:opt.N_WIN);
         end
     end
-    qrs_final = sqi_switching(qrs_in,sqi_in,tsqi,opt.SQI_THR,abp_delay,0);
+    qrs = sqi_switching(qrs_comp,sqi,tsqi,opt.SQI_THR,abp_delay,0);
 end
 
 %=== write out annotation with a hack for rounding
-qrs_final = qrs_final(:)*fs;
-qrs_final = round(qrs_final*10);
-qrs_final = round(qrs_final/10);
+qrs = qrs(:)*fs;
+qrs = round(qrs*10);
+qrs = round(qrs/10);
 
-if ~isempty(qrs_final) && SAVE_STUFF==1
+
+if ~isempty(qrs) && SAVE_STUFF==1
     %=== write out to file
-    wrann(recordName,'qrs',qrs_final,[],[],[],[]);
+    wrann(recordName,'qrs',qrs,[],[],[],[]);
 end
 
 if SAVE_STUFF==0
