@@ -1,6 +1,12 @@
 function [ F1, IndMatch ] = bsqi_matlab( refqrs, testqrs,thres,fs)
 %BSQI_MATLAB Calculate bSQI of two inputs
 %   Detailed explanation goes here
+%
+% [1] Behar, Joachim, et al. "ECG signal quality during arrhythmia and its 
+% application to false alarm reduction." Biomedical Engineering, IEEE Transactions on 60.6 (2013): 1660-1666.
+%
+% [2] Li, Qiao, Roger G. Mark, and Gari D. Clifford. "Robust heart rate estimation from multiple asynchronous noisy 
+% sources using signal quality indices and a Kalman filter." Physiological measurement 29.1 (2008): 15.
 
 % == managing inputs
 if nargin<3; thres=0.05; end;
