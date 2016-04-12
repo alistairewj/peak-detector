@@ -257,7 +257,9 @@ if opt.ENABLE_OTHER_DETECTORS == 1 && ~isempty(idxPPG)
 end
 
 %% lead switching using regularity of the RR interval
-qrs = cell(opt.N_WIN,1);
+N_WIN_MAX = max(opt.N_WIN);
+
+qrs = cell(N_WIN_MAX,1);
 % put all the annotations into a single cell array
 qrs_comp = [ann_jqrs(idxECG),ann_gqrs(idxECG),...
     ppg(idxPPG), abp(idxABP), sv(idxSV)];
@@ -271,7 +273,7 @@ qrs_header = [strcat(repmat({'jqrs'}, 1, sum(~isempty(ann_jqrs(idxECG)))), array
 
 M = numel(qrs_comp);
 
-for w=1:opt.N_WIN
+for w=1:N_WIN_MAX
     curr_qrs = cell(1,M);
     ww = w*opt.REG_WIN; % in seconds
     % "SMI" is our regularity index
