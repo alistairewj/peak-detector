@@ -35,15 +35,16 @@ elseif ~isempty(idxPPG)
     bp = data(T_START:T_END,idxPPG(1));
     
 elseif ~isempty(idxSV)
-    sig3 = 'Stroke volume';
+    sig2 = 'Stroke volume';
     bp = data(T_START:T_END,idxSV(1));
 else 
     bp = [];
+    sig2 = [];
 end
 
 t = (1:numel(ecg))';
 
-if nargin>2
+if nargin>3
     ann = varargin;
 else
     ann = [];
@@ -63,11 +64,20 @@ ecg = ecg*0.95 + 1.05;
 bp = bp - min(bp);
 bp = bp ./ max(bp);
 bp = bp*0.95 + 3.05;
-t = t./fs;
+t = t./max(fs);
 %% plot final figure
 h=figure(1); clf; hold all;
-plot(t,ecg,'-','linewidth',2,'color',col(1,:));
-plot(t,bp,'-','linewidth',2,'color',col(2,:));
+if ~isempty(ecg)
+    plot(t,ecg,'-','linewidth',2,'color',col(1,:));
+else
+    % dummy plot
+    plot(t(1),0,'-','linewidth',2,'color',col(1,:));
+end
+if ~isempty(bp)
+    plot(t,bp,'-','linewidth',2,'color',col(2,:));
+else
+    plot(t(1),0,'-','linewidth',2,'color',col(2,:));
+end
 
 % %=== plot patches for annotation locations
 % for f=1:numel(ann.atr)
