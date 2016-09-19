@@ -50,6 +50,9 @@ opt_default.DELAYALG = 'map';
 % these detectors are currently not used in the 'sqi' approach
 opt_default.ENABLE_OTHER_DETECTORS = 0;
 
+% leave temporary files in the working directory
+opt_default.SAVE_STUFF = 0;
+
 if nargin==0
     opt = opt_default;
     return;
@@ -69,7 +72,7 @@ if nargin>0 && isstruct(opt)
             val = opt.(fn{f});
             
             switch fn{f}
-                case {'USE_PACING','SIMPLEMODE','ENABLE_OTHER_DETECTORS'} 
+                case {'USE_PACING','SAVE_STUFF','SIMPLEMODE','ENABLE_OTHER_DETECTORS'} 
                     % binary
                     if ~isnumeric(val) || (val ~= 0 && val ~=1)
                         error('setDetectOptions:badValue',...

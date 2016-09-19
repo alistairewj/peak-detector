@@ -54,7 +54,7 @@ opt.N_WIN = ceil(opt.LG_REC/opt.REG_WIN); % number of windows in the signal
 
 %% PRE-GAME
 % if true, saves detections to WFDB format annotation files
-SAVE_STUFF = 0;
+SAVE_STUFF = opt.SAVE_STUFF;
 
 % note that we need to write out files in order to call gqrs
 % this is really slow.. could do with improvement..

@@ -55,7 +55,7 @@ opt.N_WIN = ceil(opt.LG_REC/opt.REG_WIN); % number of windows in the signal
 
 %% PRE-GAME
 % if true, saves detections to WFDB format annotation files
-SAVE_STUFF = 0;
+SAVE_STUFF = opt.SAVE_STUFF;
 recordName = ['TMP_' datestr(now,'dd-mm-yyyy-HHMMSSFFF')];
 
 [ idxECG, idxABP, idxPPG, idxSV ] = getSignalIndices(header);

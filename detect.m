@@ -20,13 +20,13 @@ if nargin<1
 end
 
 % check for the data/header files
-if exist([recordName '.dat'],'file') ~= 2
-    error('detect:noDataFile',...
-        ['Unable to locate data file ''' recordName '''.dat'])
-end
 if exist([recordName '.hea'],'file') ~= 2
     error('detect:noHeaderFile',...
         ['Unable to locate header file ''' recordName '''.hea'])
+end
+if exist([recordName '.dat'],'file') ~= 2 && exist([recordName '.mat'],'file') ~= 2 
+    error('detect:noDataFile',...
+        ['Unable to locate data file ''' recordName '''.dat'])
 end
 
 if nargin<2
