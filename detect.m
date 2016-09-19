@@ -46,7 +46,7 @@ if nargin<3
 end
 
 %% LOAD DATA
-data = rdsamp(recordName);
+[t,data] = rdsamp(recordName);
 [siginfo,fs] = wfdbdesc(recordName);
 
 % extract info from structure output by wfdbdesc
