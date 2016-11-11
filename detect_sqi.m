@@ -300,6 +300,14 @@ for m=idxABP
         % we can then use idxMap to determine if a beat is in window w
         [tmp,idxMap] = histc(abp{m},xi);
         tmp = tmp(1:max(idxMap));
+        
+        % if tmp has 0s, we set them to 1
+        % the ABP will consequently be 0 / 1 == 0
+        idxBad = tmp==0;
+        if any(idxBad)
+            tmp(idxBad) = 1;
+        end
+        
         tmp2 = accumarray(idxMap(idxMap~=0),sqi_bp{m}(idxMap~=0,1)) ./ tmp;
         idxKeep = unique(idxMap);
         idxKeep(idxKeep==0) = [];
@@ -328,6 +336,14 @@ for m=idxABP
             xi = tabpsqi(d,:);
             % idxMap finds which window each abp beat corresponds
             [tmp,idxMap] = histc(abp{m},xi);
+            
+            % if tmp has 0s, we set them to 1
+            % the ABP will consequently be 0 / 1 == 0
+            idxBad = tmp==0;
+            if any(idxBad)
+                tmp(idxBad) = 1;
+            end
+            
             % accumarray sums the ABP SQIs with the same idxMap
             % dividing by tmp makes abpsqi{m} the mean SQI
             sqi_abp{m}(d,1:max(idxMap)) = accumarray(idxMap(idxMap~=0),sqi_bp{m}(idxMap~=0,1)) ./ tmp(1:max(idxMap));
