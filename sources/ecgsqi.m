@@ -55,12 +55,20 @@ N_G = N_G(:);
 % create windows for the SQI
 xi1 = (0:REG_WIN:LG_REC)';
 xi2 = xi1+SIZE_WIND;
+
+% fix edge effects at the end of the record
+% this ensures that the window is always SIZE_WIND long
+% e.g. if there are only 3 seconds left in the record, we use all
+% peak detections from the last complete window of size SIZE_WIND
+xi1_trunc = xi1;
+xi1_trunc(xi2>LG_REC) = LG_REC-SIZE_WIND;
+
 F1_1 = zeros(N_WIN,1);
 F1_2 = zeros(N_WIN,1);
 
-for w=1:numel(xi1)
-    idx1 = ann1>xi1(w) & ann1<xi2(w);
-    idx2 = ann2>xi1(w) & ann2<xi2(w);
+for w=1:numel(xi1_trunc)
+    idx1 = ann1>xi1_trunc(w) & ann1<xi2(w);
+    idx2 = ann2>xi1_trunc(w) & ann2<xi2(w);
     F1_1(w) = mean( N_J(idx1)==1 );
     F1_2(w) = mean( N_G(idx2)==1 );
 end
