@@ -77,7 +77,7 @@ for r = 1:numel(records);
         % NOTE: we could have called detect() with the record name as
         % follows:
         % [ qrs, sqi ] = detect(recordName, 'sqi', opt);
-        % however, since we want to plot the data, we load it here
+        % however, since we want to plot the data, we load above
         
         % Plot the output
         set(0,'CurrentFigure',1); clf;
