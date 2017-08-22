@@ -37,7 +37,5 @@ header = arrayfun(@(x) x.Description, siginfo, 'UniformOutput', false);
 % function, but doesn't read from a .dat file
 [ qrs, sqi ] = detect_matlab(data, header, fs, 'regularity', opt);
 
-
-
 % Plot the output
-plotann( data, header, fs, qrs )
+plotann( data, header, fs, qrs );
