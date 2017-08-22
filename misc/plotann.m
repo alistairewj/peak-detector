@@ -154,14 +154,14 @@ end
 if ~isempty(sqi) && numel(sqi)>0
     % reformat the marker for clarity
     if any(strcmp({'o','^'},marker{f})); 
-        mfill = col(f+2,:); ms = 12; 
+        mfill = col(f,:); ms = 12; 
     else
         mfill='none'; ms = 16; 
     end
     
     for f = 1:numel(sqi)
         plot(sqi_time, sqi{f},marker{f},...
-                'linewidth',2,'markersize',ms,'color',col(f+2,:),...
+                'linewidth',2,'markersize',ms,'color',col(f,:),...
                 'markerfacecolor',mfill);
     end
 end
