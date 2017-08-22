@@ -273,27 +273,28 @@ qrs_header = [strcat(repmat({'jqrs'}, 1, sum(~isempty(ann_jqrs(idxECG)))), array
 
 M = numel(qrs_comp);
 
+% "SMI" is our regularity index
+% lower values indicate more regular RR interval time series
+% it's simply the standard deviation of the RR interval histogram
+% we default it to 100 - this is a *very* large value
+smi = 100*ones(N_WIN_MAX,M+1);
+
 for w=1:N_WIN_MAX
     curr_qrs = cell(1,M);
     ww = w*opt.REG_WIN; % in seconds
-    % "SMI" is our regularity index
-    % lower values indicate more regular RR interval time series
-    % it's simply the standard deviation of the RR interval histogram
-    % we default it to 100 - this is a *very* large value
-    smi = 100*ones(1,numel(curr_qrs)+1);
     for m=1:M
         % first, subselect a window of data
         curr_qrs{m} = qrs_comp{m}(qrs_comp{m}>ww-opt.REG_WIN & qrs_comp{m}<=ww);
         
         % if we have more than 2 peaks, calculate std(std(RR intervals))
         if numel(curr_qrs{m})>2
-            smi(m) = assess_regularity(curr_qrs{m}-(ww-opt.REG_WIN),0,1,0.96,opt.REG_WIN,0);
+            smi(w,m) = assess_regularity(curr_qrs{m}-(ww-opt.REG_WIN),0,1,0.96,opt.REG_WIN,0);
         end
     end
     
     %FIXME: if all regularities are poor, we should probably output no
     %annotations rather than garbage
-    [minSMI,idxMin] = min(smi);
+    [minSMI,idxMin] = min(smi(w,:));
     qrs{w} = curr_qrs{idxMin};
     
     %=== we must remove double detections at the boundaries
@@ -318,10 +319,8 @@ for w=1:N_WIN_MAX
     end
 end
 
+smi = smi(:,1:end-1);
 qrs = vertcat(qrs{:});
-if ~isempty(qrs)
-    qrs = round(qrs(:)*fs(m));
-end
 
 if SAVE_STUFF==0
     % clean up folder
