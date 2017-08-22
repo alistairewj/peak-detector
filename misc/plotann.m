@@ -98,7 +98,13 @@ bp = bp*0.95 + 3.05;
 t = t./max(fs);
 
 %% plot final figure
-h=figure(1); clf; hold all;
+try
+    set(0,'CurrentFigure',1);
+catch
+    figure(1);
+end
+
+clf; hold all;
 if ~isempty(ecg)
     plot(t,ecg,'-','linewidth',2,'color',col(1,:));
 else
@@ -152,14 +158,14 @@ end
 
 % plot SQI
 if ~isempty(sqi) && numel(sqi)>0
-    % reformat the marker for clarity
-    if any(strcmp({'o','^'},marker{f})); 
-        mfill = col(f,:); ms = 12; 
-    else
-        mfill='none'; ms = 16; 
-    end
-    
     for f = 1:numel(sqi)
+        % reformat the marker for clarity
+        if any(strcmp({'o','^'},marker{f})); 
+            mfill = col(f,:); ms = 12; 
+        else
+            mfill='none'; ms = 16; 
+        end
+        
         plot(sqi_time, sqi{f},marker{f},...
                 'linewidth',2,'markersize',ms,'color',col(f,:),...
                 'markerfacecolor',mfill);
