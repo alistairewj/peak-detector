@@ -1,5 +1,9 @@
 function [ h ] = plotann( data, header, fs, varargin )
 %PLOTANN	Plot a subsection of a signal with anns
+% [ h ] = plotann( data, header, fs, ann, sqi )
+% 
+% ann - cell array, annotations in seconds
+% sqi - cell array, one annotation per second
 
 %	Copyright 2014 Alistair Johnson
 
@@ -22,7 +26,7 @@ T_START = 1; T_END = size(data,1);
 [ idxECG, idxABP, idxPPG, idxSV ] = getSignalIndices(header);
 
 if ~isempty(idxECG)
-ecg = data(T_START:T_END,idxECG(1));
+    ecg = data(T_START:T_END,idxECG(1));
 else
     ecg = [];
 end
@@ -41,19 +45,46 @@ else
     bp = [];
     sig2 = [];
 end
-
 t = (1:numel(ecg))';
+fs = fs(1);
 
-if nargin>3
-    ann = varargin;
+if nargin > 4
+   ann = varargin{1};
+   sqi = varargin{2};
+elseif nargin > 3
+    ann = varargin{1};
+    sqi = {};
+end
+%% subsample ANNs
+if ~isempty(ann)
+    if isnumeric(ann)
+        ann = {ann};
+    end
+    
+    for f=1:numel(ann)
+        ann{f} = ceil(ann{f}*fs);
+        ann{f} = ann{f}(ann{f} >= T_START & ann{f} < T_END); 
+        ann{f} = ann{f} - T_START;
+    end
 else
-    ann = [];
+    ann = {};
 end
 
-%% subsample ANNs
-for f=1:numel(ann)
-    ann{f} = ann{f}(ann{f} >= T_START & ann{f} < T_END); 
-    ann{f} = ann{f} - T_START;
+%% subsample SQIs
+
+if ~isempty(sqi)
+    if isnumeric(sqi)
+        sqi = {sqi};
+    end
+    sqi_time = floor(T_START/fs)+1:floor(T_END/fs);
+    sqi_time = sqi_time - floor(T_START/fs);
+    
+    for f=1:numel(sqi)
+        sqi{f} = sqi{f}(floor(T_START/fs)+1:floor(T_END/fs)); 
+    end
+else
+    sqi_time = [];
+    sqi = {};
 end
 
 %=== rescale ecg+bp for plotting
@@ -65,6 +96,7 @@ bp = bp - min(bp);
 bp = bp ./ max(bp);
 bp = bp*0.95 + 3.05;
 t = t./max(fs);
+
 %% plot final figure
 h=figure(1); clf; hold all;
 if ~isempty(ecg)
@@ -113,6 +145,22 @@ for f=1:numel(fn_plot)
         otherwise
             % plot on the ECG
             plot(t(curr_ann),2*ones(numel(curr_ann),1) + f / (numel(fn_plot)+1),marker{f},...
+                'linewidth',2,'markersize',ms,'color',col(f+2,:),...
+                'markerfacecolor',mfill);
+    end
+end
+
+% plot SQI
+if ~isempty(sqi) && numel(sqi)>0
+    % reformat the marker for clarity
+    if any(strcmp({'o','^'},marker{f})); 
+        mfill = col(f+2,:); ms = 12; 
+    else
+        mfill='none'; ms = 16; 
+    end
+    
+    for f = 1:numel(sqi)
+        plot(sqi_time, sqi{f},marker{f},...
                 'linewidth',2,'markersize',ms,'color',col(f+2,:),...
                 'markerfacecolor',mfill);
     end
